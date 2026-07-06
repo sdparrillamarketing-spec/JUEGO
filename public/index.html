@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SD · Rueda de Premios Imprexpo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0b0b0c;
+    --paper:#faf9f6;
+    --sd-red:#ed1c24;
+    --cyan:#00aeef;
+    --magenta:#ec008c;
+    --yellow:#ffe800;
+    --line: rgba(250,249,246,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    position:relative;
+    padding:32px 16px;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(circle, var(--cyan) 1px, transparent 1.4px),
+      radial-gradient(circle, var(--magenta) 1px, transparent 1.4px),
+      radial-gradient(circle, var(--yellow) 1px, transparent 1.4px);
+    background-size: 42px 42px, 42px 42px, 42px 42px;
+    background-position: 0 0, 14px 14px, 28px 28px;
+    opacity:0.07;
+    pointer-events:none;
+    z-index:0;
+  }
+  .stage{ position:relative; z-index:1; width:100%; max-width:640px; }
+
+  .regbar{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.08em;
+    color:rgba(250,249,246,0.45); margin-bottom:18px; text-transform:uppercase;
+  }
+  .regbar .marks{ display:flex; gap:8px; align-items:center; }
+  .swatch{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .swatch.c{background:var(--cyan);} .swatch.m{background:var(--magenta);}
+  .swatch.y{background:var(--yellow);} .swatch.k{background:#fff;}
+  .crosshair{ width:14px; height:14px; position:relative; opacity:0.5; }
+  .crosshair::before, .crosshair::after{ content:""; position:absolute; background:var(--paper); }
+  .crosshair::before{ width:100%; height:1px; top:50%; left:0; }
+  .crosshair::after{ width:1px; height:100%; left:50%; top:0; }
+
+  header{ text-align:center; margin-bottom:28px; }
+  .logo-wrap{
+    display:inline-flex; align-items:center; justify-content:center;
+    background:var(--paper); padding:10px 22px; border-radius:6px; margin-bottom:22px;
+  }
+  .logo-wrap img{ height:34px; display:block; }
+
+  h1{
+    font-family:'Anton', sans-serif; font-weight:400;
+    font-size:clamp(28px, 6vw, 44px); line-height:0.95;
+    letter-spacing:0.01em; text-transform:uppercase;
+  }
+  h1 span{ color:var(--sd-red); }
+  .subtitle{ font-size:13px; color:rgba(250,249,246,0.55); margin-top:10px; font-weight:500; }
+
+  /* --- formulario de identificación --- */
+  .id-form{
+    margin-top:30px;
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:8px;
+    padding:22px;
+  }
+  .id-form label{
+    display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.06em; color:rgba(11,11,12,0.55); margin-bottom:6px;
+  }
+  .id-form input{
+    width:100%; padding:12px 14px; margin-bottom:14px;
+    border:1.5px solid rgba(11,11,12,0.15); border-radius:6px;
+    font-family:'Inter'; font-size:15px; background:#fff; color:var(--ink);
+  }
+  .id-form input:focus{ outline:none; border-color:var(--sd-red); }
+  .id-form button{
+    width:100%; padding:14px; border:none; border-radius:6px;
+    background:var(--sd-red); color:var(--paper);
+    font-family:'Inter'; font-weight:800; text-transform:uppercase;
+    font-size:14px; letter-spacing:0.04em; cursor:pointer;
+    transition: filter .15s ease;
+  }
+  .id-form button:hover{ filter:brightness(1.08); }
+  .id-form .form-error{
+    color:var(--sd-red); font-size:12.5px; font-weight:600; margin-top:-6px; margin-bottom:12px; display:none;
+  }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:30px;
+  }
+  .tile{
+    position:relative; aspect-ratio:1/1.05; background:var(--paper);
+    border-radius:4px; cursor:pointer; overflow:hidden;
+    border:1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 8px 18px rgba(0,0,0,0.35);
+    transition: transform .18s ease, box-shadow .18s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tile::before{
+    content:""; position:absolute; inset:0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.025) 0 1px, transparent 1px 3px);
+    pointer-events:none;
+  }
+  .tile:not(.locked):hover{
+    transform: translateY(-4px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 14px 26px rgba(237,28,36,0.28);
+  }
+  .tile-number{
+    position:absolute; top:8px; left:9px; font-family:'JetBrains Mono', monospace;
+    font-size:11px; color:rgba(11,11,12,0.35); letter-spacing:0.05em;
+  }
+  .tile-mark{
+    position:absolute; top:8px; right:9px; width:7px; height:7px;
+    border-radius:50%; background:var(--sd-red); opacity:0.55;
+  }
+  .tile-face{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--ink); }
+  .tile-face .glyph{ font-family:'Anton', sans-serif; font-size:38px; color:var(--sd-red); opacity:0.9; }
+
+  .tile-result{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px; padding:10px; text-align:center;
+    background:var(--paper);
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path .9s cubic-bezier(.2,.8,.2,1);
+  }
+  .tile.revealed .tile-result{ clip-path: inset(0 0 0% 0); }
+  .tile.revealed .tile-face{ opacity:0; }
+  .tile-result .icon{ font-size:30px; line-height:1; }
+  .tile-result .label{
+    font-family:'Inter'; font-weight:800; font-size:12px; text-transform:uppercase;
+    letter-spacing:0.02em; color:var(--ink); line-height:1.15;
+  }
+  .tile.win .tile-result{ background:var(--sd-red); }
+  .tile.win .tile-result .label, .tile.win .tile-result .icon{ color:var(--paper); }
+
+  .sweep{
+    position:absolute; left:0; right:0; height:3px;
+    background:linear-gradient(90deg, var(--cyan), var(--magenta), var(--yellow));
+    box-shadow:0 0 10px rgba(255,255,255,0.6); top:0;
+    animation: sweepdown .9s cubic-bezier(.2,.8,.2,1) forwards; z-index:3;
+  }
+  @keyframes sweepdown{ from{ top:0; } to{ top:100%; } }
+
+  .tile.locked{ cursor:default; }
+  .tile.dim{ opacity:0.35; filter:grayscale(0.4); pointer-events:none; }
+
+  .result-banner{ margin-top:26px; text-align:center; min-height:64px; }
+  .result-banner .headline{ font-family:'Anton', sans-serif; font-size:22px; text-transform:uppercase; }
+  .result-banner .headline .name{ color:var(--sd-red); }
+  .result-banner .caption{ margin-top:6px; font-size:12.5px; color:rgba(250,249,246,0.55); }
+
+  .hidden{ display:none !important; }
+
+  footer{
+    margin-top:36px; text-align:center; font-family:'JetBrains Mono', monospace;
+    font-size:10px; letter-spacing:0.08em; color:rgba(250,249,246,0.3); text-transform:uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="regbar">
+    <div class="marks">
+      <span class="swatch c"></span><span class="swatch m"></span>
+      <span class="swatch y"></span><span class="swatch k"></span>
+    </div>
+    <span id="eventLabel">IMPREXPO</span>
+    <div class="crosshair"></div>
+  </div>
+
+  <header>
+    <div class="logo-wrap">
+      <img src="/assets/logo.jpg" alt="SD Soluciones Digitales">
+    </div>
+    <h1>Elige tu casilla,<br><span>gana tu premio</span></h1>
+    <p class="subtitle">Una sola oportunidad por persona</p>
+  </header>
+
+  <!-- Paso 1: identificación -->
+  <form class="id-form" id="idForm">
+    <label for="name">Nombre completo</label>
+    <input type="text" id="name" placeholder="Ej. Juan Pérez" required>
+    <label for="contact">Correo o teléfono</label>
+    <input type="text" id="contact" placeholder="juan@correo.com o 33 1234 5678" required>
+    <p class="form-error" id="formError"></p>
+    <button type="submit">Comenzar a jugar</button>
+  </form>
+
+  <!-- Paso 2: la cuadrícula -->
+  <div class="grid hidden" id="grid"></div>
+
+  <div class="result-banner" id="resultBanner"></div>
+
+  <footer>SD Soluciones Digitales &reg; · Juego de stand</footer>
+</div>
+
+<script>
+  const idForm = document.getElementById('idForm');
+  const formError = document.getElementById('formError');
+  const grid = document.getElementById('grid');
+  const resultBanner = document.getElementById('resultBanner');
+  const eventLabel = document.getElementById('eventLabel');
+
+  let played = false;
+  let currentParticipant = null;
+
+  // Carga config pública (nombre del evento)
+  fetch('/api/config').then(r => r.json()).then(cfg => {
+    eventLabel.textContent = (cfg.eventName || 'IMPREXPO').toUpperCase() + ' · 2026';
+  }).catch(() => {});
+
+  function buildGrid(){
+    grid.innerHTML = '';
+    for(let i = 0; i < 9; i++){
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.innerHTML = `
+        <span class="tile-number">${String(i+1).padStart(2,'0')}/09</span>
+        <span class="tile-mark"></span>
+        <div class="tile-face"><span class="glyph">?</span></div>
+        <div class="tile-result">
+          <span class="icon"></span>
+          <span class="label"></span>
+        </div>
+      `;
+      tile.addEventListener('click', () => handlePick(tile));
+      grid.appendChild(tile);
+    }
+  }
+
+  idForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    formError.style.display = 'none';
+
+    const name = document.getElementById('name').value.trim();
+    const contact = document.getElementById('contact').value.trim();
+
+    if(!name || !contact){
+      formError.textContent = 'Por favor completa nombre y correo o teléfono.';
+      formError.style.display = 'block';
+      return;
+    }
+
+    currentParticipant = { name, contact };
+    idForm.classList.add('hidden');
+    buildGrid();
+    grid.classList.remove('hidden');
+  });
+
+  async function handlePick(tile){
+    if(played) return;
+    played = true;
+
+    document.querySelectorAll('.tile').forEach(t => {
+      t.classList.add('locked');
+      if(t !== tile) t.classList.add('dim');
+    });
+
+    const sweep = document.createElement('div');
+    sweep.className = 'sweep';
+    tile.appendChild(sweep);
+
+    let data;
+    try{
+      const res = await fetch('/api/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentParticipant)
+      });
+      data = await res.json();
+
+      if(!res.ok){
+        resultBanner.innerHTML = `
+          <div class="headline" style="color:var(--sd-red);">${data.error || 'No fue posible procesar tu jugada.'}</div>
+        `;
+        sweep.remove();
+        return;
+      }
+    }catch(err){
+      resultBanner.innerHTML = `<div class="headline" style="color:var(--sd-red);">Error de conexión. Intenta de nuevo.</div>`;
+      sweep.remove();
+      return;
+    }
+
+    const iconEl = tile.querySelector('.tile-result .icon');
+    const labelEl = tile.querySelector('.tile-result .label');
+    iconEl.textContent = data.prize.icon;
+    labelEl.textContent = data.prize.label;
+
+    requestAnimationFrame(() => {
+      tile.classList.add('revealed');
+      if(data.won) tile.classList.add('win');
+    });
+
+    setTimeout(() => {
+      if(data.won){
+        resultBanner.innerHTML = `
+          <div class="headline">¡Ganaste una <span class="name">${data.prize.label}</span>!</div>
+          <p class="caption">Acércate al stand de SD Soluciones Digitales para reclamar tu premio.</p>
+        `;
+      } else {
+        resultBanner.innerHTML = `
+          <div class="headline">${data.prize.label}</div>
+          <p class="caption">Gracias por participar. ¡Síguenos para más promociones!</p>
+        `;
+      }
+    }, 500);
+  }
+</script>
+
+</body>
+</html>
