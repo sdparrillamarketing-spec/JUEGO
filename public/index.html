@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SD · Tragamonedas de Premios Imprexpo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0b0b0c;
+    --metal-1:#232326;
+    --metal-2:#141416;
+    --paper:#faf9f6;
+    --sd-red:#ed1c24;
+    --sd-red-dark:#9c0d12;
+    --cyan:#00aeef;
+    --magenta:#ec008c;
+    --yellow:#ffe800;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background: radial-gradient(circle at 50% 0%, #1a1a1c 0%, #050505 65%);
+    color:var(--paper);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:32px 16px;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(circle, var(--cyan) 1px, transparent 1.4px),
+      radial-gradient(circle, var(--magenta) 1px, transparent 1.4px),
+      radial-gradient(circle, var(--yellow) 1px, transparent 1.4px);
+    background-size: 46px 46px, 46px 46px, 46px 46px;
+    background-position: 0 0, 15px 15px, 30px 30px;
+    opacity:0.05;
+    pointer-events:none;
+  }
+
+  .stage{ position:relative; z-index:1; width:100%; max-width:480px; text-align:center; }
+
+  .eyebrow{
+    font-family:'Anton', sans-serif; font-size:26px; letter-spacing:0.06em;
+    color:var(--paper); text-transform:uppercase; margin-bottom:18px;
+    text-shadow: 0 0 18px rgba(237,28,36,0.55);
+  }
+  .eyebrow span{ color:var(--sd-red); }
+
+  .cabinet{
+    background: linear-gradient(180deg, var(--metal-1) 0%, var(--metal-2) 100%);
+    border-radius:22px 22px 14px 14px;
+    padding:20px 20px 28px;
+    border:1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+    position:relative;
+  }
+
+  .marquee{
+    background:var(--paper);
+    border-radius:12px;
+    padding:20px 18px;
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    margin-bottom:20px;
+    position:relative;
+    overflow:hidden;
+  }
+  .marquee img{ height:46px; display:block; }
+  .marquee .divider{ width:2px; height:40px; background:rgba(11,11,12,0.15); }
+  .marquee .title{
+    font-family:'Anton', sans-serif; font-size:23px; color:var(--ink);
+    text-transform:uppercase; letter-spacing:0.01em; line-height:0.98;
+    text-align:left;
+  }
+  .marquee .title small{
+    display:block; font-family:'Inter'; font-weight:700; font-size:12px;
+    letter-spacing:0.06em; color:var(--sd-red); margin-top:4px;
+  }
+  .bulbs{ position:absolute; inset:0; pointer-events:none; }
+  .bulb{
+    position:absolute; width:5px; height:5px; border-radius:50%;
+    background:var(--sd-red); top:4px;
+    animation: chase 1.4s linear infinite;
+  }
+
+  .reel-window{
+    background:#000;
+    border-radius:10px;
+    padding:14px;
+    display:flex;
+    gap:8px;
+    position:relative;
+    box-shadow: inset 0 4px 14px rgba(0,0,0,0.8), inset 0 -4px 14px rgba(0,0,0,0.6);
+    border:3px solid #000;
+  }
+  .reel-window::before, .reel-window::after{
+    content:""; position:absolute; left:8px; right:8px; height:2px;
+    background:var(--sd-red); opacity:0.7; z-index:5;
+  }
+  .reel-window::before{ top:calc(50% - 32px); }
+  .reel-window::after{ top:calc(50% + 30px); }
+
+  .reel{
+    flex:1; height:96px;
+    background:linear-gradient(180deg, #050505 0%, #111 50%, #050505 100%);
+    border-radius:6px; overflow:hidden; position:relative;
+    border:1px solid rgba(255,255,255,0.05);
+  }
+  .reel-strip{ display:flex; flex-direction:column; position:absolute; left:0; right:0; top:0; }
+  .symbol{
+    height:96px; display:flex; align-items:center; justify-content:center;
+    font-size:44px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+  .reel.spinning .reel-strip{ animation: spin-blur 0.15s linear infinite; }
+  @keyframes spin-blur{ from{ filter: blur(0px);} 50%{ filter: blur(3px);} to{ filter: blur(0px);} }
+  @keyframes chase{ 0%, 100%{ opacity:0.15; } 50%{ opacity:1; } }
+
+  .payline-mark{ position:absolute; top:50%; transform:translateY(-50%); font-size:12px; color:var(--sd-red); font-weight:800; }
+  .payline-mark.left{ left:-2px; }
+  .payline-mark.right{ right:-2px; }
+
+  .controls{ display:flex; align-items:center; justify-content:center; margin-top:22px; }
+  .spin-btn{
+    width:150px; height:56px; border-radius:100px; border:none;
+    background: linear-gradient(180deg, #ff4d4d 0%, var(--sd-red) 45%, var(--sd-red-dark) 100%);
+    color:var(--paper); font-family:'Anton', sans-serif; font-size:18px;
+    letter-spacing:0.04em; text-transform:uppercase; cursor:pointer;
+    box-shadow: 0 6px 0 var(--sd-red-dark), 0 10px 18px rgba(237,28,36,0.4);
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .spin-btn:active:not(:disabled){ transform:translateY(4px); box-shadow: 0 2px 0 var(--sd-red-dark), 0 4px 10px rgba(237,28,36,0.4); }
+  .spin-btn:disabled{
+    background:linear-gradient(180deg, #555 0%, #333 100%); box-shadow:0 6px 0 #1c1c1c;
+    color:rgba(250,249,246,0.4); cursor:default;
+  }
+
+  .cabinet-foot{
+    display:flex; justify-content:space-between; margin-top:16px;
+    font-family:'JetBrains Mono', monospace; font-size:9.5px;
+    color:rgba(250,249,246,0.25); letter-spacing:0.08em; text-transform:uppercase;
+  }
+
+  /* identification form, shown before the cabinet is usable */
+  .id-form{
+    background:var(--paper); color:var(--ink); border-radius:8px; padding:22px; margin-bottom:20px;
+  }
+  .id-form label{
+    display:block; font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.06em; color:rgba(11,11,12,0.55); margin-bottom:6px;
+  }
+  .id-form input{
+    width:100%; padding:12px 14px; margin-bottom:14px;
+    border:1.5px solid rgba(11,11,12,0.15); border-radius:6px;
+    font-family:'Inter'; font-size:15px; background:#fff; color:var(--ink);
+  }
+  .id-form input:focus{ outline:none; border-color:var(--sd-red); }
+  .id-form button{
+    width:100%; padding:14px; border:none; border-radius:6px;
+    background:var(--sd-red); color:var(--paper);
+    font-family:'Inter'; font-weight:800; text-transform:uppercase;
+    font-size:14px; letter-spacing:0.04em; cursor:pointer;
+  }
+  .id-form .form-error{ color:var(--sd-red); font-size:12.5px; font-weight:600; margin-top:-6px; margin-bottom:12px; display:none; }
+
+  .hidden{ display:none !important; }
+
+  .result-banner{ margin-top:24px; min-height:66px; }
+  .result-banner .headline{ font-family:'Anton', sans-serif; font-size:22px; text-transform:uppercase; }
+  .result-banner .headline .name{ color:var(--sd-red); }
+  .result-banner .caption{ margin-top:6px; font-size:12.5px; color:rgba(250,249,246,0.5); }
+
+  footer{
+    margin-top:28px; font-family:'JetBrains Mono', monospace; font-size:10px;
+    letter-spacing:0.08em; color:rgba(250,249,246,0.25); text-transform:uppercase;
+  }
+
+  .glow-win{ animation: winglow 0.6s ease-in-out infinite alternate; }
+  @keyframes winglow{
+    from{ box-shadow: inset 0 4px 14px rgba(0,0,0,0.8), 0 0 10px rgba(237,28,36,0.3); }
+    to{ box-shadow: inset 0 4px 14px rgba(0,0,0,0.8), 0 0 28px rgba(237,28,36,0.85); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <p class="eyebrow" id="eventLabel">Imprexpo <span>·</span> 2026</p>
+
+  <!-- Paso 1: identificación -->
+  <form class="id-form" id="idForm">
+    <label for="name">Nombre completo</label>
+    <input type="text" id="name" placeholder="Ej. Juan Pérez" required>
+    <label for="contact">Correo o teléfono</label>
+    <input type="text" id="contact" placeholder="juan@correo.com o 33 1234 5678" required>
+    <p class="form-error" id="formError"></p>
+    <button type="submit">Comenzar a jugar</button>
+  </form>
+
+  <!-- Paso 2: el gabinete -->
+  <div class="cabinet hidden" id="cabinet">
+    <div class="marquee">
+      <img src="/assets/logo.jpg" alt="SD Soluciones Digitales">
+      <div class="divider"></div>
+      <div class="title">Tragamonedas<small>de premios SD</small></div>
+      <div class="bulbs" id="bulbs"></div>
+    </div>
+
+    <div class="reel-window" id="reelWindow">
+      <span class="payline-mark left">▶</span>
+      <div class="reel"><div class="reel-strip" id="strip0"></div></div>
+      <div class="reel"><div class="reel-strip" id="strip1"></div></div>
+      <div class="reel"><div class="reel-strip" id="strip2"></div></div>
+      <span class="payline-mark right">◀</span>
+    </div>
+
+    <div class="controls">
+      <button class="spin-btn" id="spinBtn">Girar</button>
+    </div>
+
+    <div class="cabinet-foot">
+      <span>Una jugada · SD Soluciones Digitales</span>
+      <span id="statusTxt">Listo</span>
+    </div>
+  </div>
+
+  <div class="result-banner" id="resultBanner"></div>
+
+  <footer>SD Soluciones Digitales &reg; · Juego de stand</footer>
+</div>
+
+<script>
+  const REEL_HEIGHT = 96;
+  const REPEATS = 6;
+
+  const idForm = document.getElementById('idForm');
+  const formError = document.getElementById('formError');
+  const cabinet = document.getElementById('cabinet');
+  const eventLabel = document.getElementById('eventLabel');
+  const strips = [document.getElementById('strip0'), document.getElementById('strip1'), document.getElementById('strip2')];
+  const spinBtn = document.getElementById('spinBtn');
+  const resultBanner = document.getElementById('resultBanner');
+  const statusTxt = document.getElementById('statusTxt');
+  const reelWindow = document.getElementById('reelWindow');
+
+  let SYMBOLS = [];      // loaded from /api/config: [{id, icon, label}, ...] + noPrize appended
+  let currentParticipant = null;
+  let played = false;
+  let spinning = false;
+
+  async function loadConfig(){
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    eventLabel.innerHTML = `${(cfg.eventName || 'Imprexpo').toUpperCase()} <span>·</span> 2026`;
+    SYMBOLS = [...cfg.prizes, cfg.noPrize];
+    buildStrips();
+  }
+
+  function buildStrip(el){
+    el.innerHTML = '';
+    for(let r = 0; r < REPEATS; r++){
+      SYMBOLS.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'symbol';
+        div.textContent = s.icon;
+        el.appendChild(div);
+      });
+    }
+    el.style.transform = 'translateY(0px)';
+  }
+
+  function buildStrips(){ strips.forEach(buildStrip); }
+
+  function buildBulbs(){
+    const bulbsEl = document.getElementById('bulbs');
+    const count = 14;
+    for(let i = 0; i < count; i++){
+      const b = document.createElement('div');
+      b.className = 'bulb';
+      b.style.left = ((i / count) * 100) + '%';
+      b.style.animationDelay = (i * 0.09) + 's';
+      bulbsEl.appendChild(b);
+    }
+  }
+
+  idForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    formError.style.display = 'none';
+    const name = document.getElementById('name').value.trim();
+    const contact = document.getElementById('contact').value.trim();
+    if(!name || !contact){
+      formError.textContent = 'Por favor completa nombre y correo o teléfono.';
+      formError.style.display = 'block';
+      return;
+    }
+    currentParticipant = { name, contact };
+    idForm.classList.add('hidden');
+    cabinet.classList.remove('hidden');
+  });
+
+  function spinReelTo(stripEl, targetSymbolId, delay, duration){
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const reelEl = stripEl.parentElement;
+        reelEl.classList.add('spinning');
+
+        const lastLoopStart = (REPEATS - 2) * SYMBOLS.length;
+        const targetIndexInSet = SYMBOLS.findIndex(s => s.id === targetSymbolId);
+        const safeIndex = targetIndexInSet === -1 ? 0 : targetIndexInSet;
+        const targetIndex = lastLoopStart + safeIndex;
+        const targetY = -(targetIndex * REEL_HEIGHT);
+
+        stripEl.style.transition = `transform ${duration}ms cubic-bezier(.15,.85,.25,1)`;
+        requestAnimationFrame(() => {
+          stripEl.style.transform = `translateY(${targetY}px)`;
+        });
+
+        setTimeout(() => {
+          reelEl.classList.remove('spinning');
+          resolve();
+        }, duration);
+      }, delay);
+    });
+  }
+
+  async function handleSpin(){
+    if(played || spinning) return;
+    played = true;
+    spinning = true;
+    spinBtn.disabled = true;
+    statusTxt.textContent = 'Girando…';
+    resultBanner.innerHTML = '';
+
+    let data;
+    try{
+      const res = await fetch('/api/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentParticipant)
+      });
+      data = await res.json();
+
+      if(!res.ok){
+        spinning = false;
+        statusTxt.textContent = 'Listo';
+        resultBanner.innerHTML = `<div class="headline" style="color:var(--sd-red);">${data.error || 'No fue posible procesar tu jugada.'}</div>`;
+        return;
+      }
+    }catch(err){
+      spinning = false;
+      statusTxt.textContent = 'Listo';
+      resultBanner.innerHTML = `<div class="headline" style="color:var(--sd-red);">Error de conexión. Intenta de nuevo.</div>`;
+      return;
+    }
+
+    // All three reels land on the same symbol the backend decided:
+    // the prize icon on a win, or the "sin premio" icon otherwise.
+    const targetId = data.won ? data.prize.id : 'sin_premio';
+
+    await Promise.all([
+      spinReelTo(strips[0], targetId, 0,   1400),
+      spinReelTo(strips[1], targetId, 250, 1700),
+      spinReelTo(strips[2], targetId, 500, 2000)
+    ]);
+
+    spinning = false;
+    statusTxt.textContent = data.won ? '¡Premio!' : 'Sin premio';
+
+    if(data.won){
+      reelWindow.classList.add('glow-win');
+      resultBanner.innerHTML = `
+        <div class="headline">¡Ganaste una <span class="name">${data.prize.label}</span>!</div>
+        <p class="caption">Acércate al stand de SD Soluciones Digitales para reclamar tu premio.</p>
+      `;
+    } else {
+      resultBanner.innerHTML = `
+        <div class="headline">${data.prize.label}</div>
+        <p class="caption">Gracias por participar. ¡Síguenos para más promociones!</p>
+      `;
+    }
+  }
+
+  spinBtn.addEventListener('click', handleSpin);
+
+  buildBulbs();
+  loadConfig();
+</script>
+
+</body>
+</html>
